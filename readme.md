@@ -1,3 +1,9 @@
+# NOT FOR PRODUCTION USE
+# this is a toy project, and is not secure or reliable
+
+
+# Premise
+
 The idea of this project is to learn a bit about `rust`, and to build a basic identity provider supporting OAuth2.0, JWT, and/or OpenID-connect.
 
 # Commands
