@@ -4,6 +4,8 @@ use bytes::Bytes;
 use url::form_urlencoded;
 use std::collections::HashMap;
 
+use crate::db;
+
 static LOGIN_HTML : &str = include_str!("login.html");
 
 pub async fn login_form() -> impl Responder {
@@ -19,10 +21,22 @@ pub async fn login_submit(body: Bytes) -> impl Responder {
     // So in here we verify the username and password
     // Then make a time-limited token
     // and include it in a redirect
+    let pass = db::get_user_pass(form_data["user"].clone());
+
+    let resp: bool;
+    match pass {
+        Some(hash) => {
+            match bcrypt::verify(&form_data["pass"], &hash) {
+                Ok(valid) => resp = valid,
+                Err(_) => {resp = false; println!("Unable to verify password hash") }
+            }
+        },
+        None => resp = false
+    };
 
     HttpResponse::Ok()
     .content_type(ContentType::html())
-    .body(form_data["user"].clone())
+    .body(if (resp) {"ok"}else{ "not ok"})
 }
 
 fn parse_form_data(body: Bytes) -> HashMap<String, String> {

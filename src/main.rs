@@ -1,8 +1,12 @@
 use actix_web::{web, App, HttpServer};
 mod authorize;
+mod db;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
+    db::add_user("tom".to_string(), "test".to_string());
+
     HttpServer::new(|| {
         App::new().service(
             web::scope("/oauth")
