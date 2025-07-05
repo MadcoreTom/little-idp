@@ -10,7 +10,6 @@ lazy_static! {
 lazy_static! {
     static ref AUTH_CODE: Mutex<HashMap<String, DbAuthCode>> = Mutex::new(HashMap::new());
 }
-// TODO add a map of user->pass (bcrypted)
 
 pub fn add_user(user: String, pass: String) {
     // makes accessing this global state threadsafe (i like it)
@@ -41,22 +40,14 @@ pub fn get_user_pass(user: String) -> Option<String> {
 
 struct DbAuthCode {
     key: String,
-    secretHashStr: String,
+    secret_hash: String,
     user: String, // TODO add expiry
 }
 
-pub fn add_auth_code(key: String, secret: Vec<u8>, user: String) {
-    // Hash the secret
-    let secretHash = bcrypt::hash(secret, 12);
-    let mut secretHashStr = "".to_string();
-    match secretHash { // TODO move hashing into auth_code.rs
-        Ok(h) => secretHashStr = h.to_string(),
-        Err(e) => println!("Error hashing secret")
-    }
-    
+pub fn add_auth_code(key: String, secret_hash: String, user: String) {
     let val = DbAuthCode {
         key: key.clone(),
-        secretHashStr,
+        secret_hash,
         user,
     };
 

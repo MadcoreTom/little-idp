@@ -4,15 +4,18 @@ use rand::rngs::OsRng;
 pub struct AuthCode {
     pub key: String,
     pub secret: String,
-    pub secret_bytes: Vec<u8>,
+    pub secret_hash: String,
 }
 
 pub fn create_auth_code() -> AuthCode {
     let secret_bytes = random_bytes(16);
+    // has the secret bytes, and if that fails, just use an invalid hash
+    let secret_hash = hash_bytes(secret_bytes.clone());
+
     AuthCode {
         key: bytes_to_hex(random_bytes(16)),
-        secret: bytes_to_hex(secret_bytes.clone()),
-        secret_bytes: secret_bytes,
+        secret: bytes_to_hex(secret_bytes),
+        secret_hash,
     }
 }
 
@@ -24,4 +27,8 @@ fn random_bytes(len: usize) -> Vec<u8> {
 
 fn bytes_to_hex(buffer: Vec<u8>) -> String {
     buffer.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn hash_bytes(bytes: Vec<u8>) -> String {
+    bcrypt::hash(bytes, 12).unwrap_or_else(|_| "INVALID".to_string())
 }

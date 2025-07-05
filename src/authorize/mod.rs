@@ -1,6 +1,6 @@
 use actix_web::http::Uri;
 use actix_web::http::header::{self, ContentType};
-use actix_web::{HttpRequest, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder};
 use bytes::Bytes;
 use std::collections::HashMap;
 use url::{Url, form_urlencoded};
@@ -52,7 +52,7 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
 
 fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
     let auth_code = create_auth_code();
-    add_auth_code(auth_code.key.clone(), auth_code.secret_bytes, user);
+    add_auth_code(auth_code.key.clone(), auth_code.secret_hash, user);
 
     println!("Callback {}", callback);
     // TODO parse URL first before even trying to login
@@ -82,12 +82,4 @@ fn parse_form_data(body: Bytes) -> HashMap<String, String> {
         form_data.insert(key.into_owned(), value.into_owned());
     }
     form_data
-}
-
-fn get_query_param(uri: &Uri, key: &str) -> Option<String> {
-    uri.query().and_then(|query| {
-        form_urlencoded::parse(query.as_bytes())
-            .find(|(k, _)| k == key)
-            .map(|(_, v)| v.into_owned())
-    })
 }
