@@ -1,8 +1,9 @@
-use actix_web::http::header::ContentType;
-use actix_web::{HttpResponse, Responder};
+use actix_web::http::Uri;
+use actix_web::http::header::{self, ContentType};
+use actix_web::{HttpRequest, HttpResponse, Responder};
 use bytes::Bytes;
 use std::collections::HashMap;
-use url::form_urlencoded;
+use url::{Url, form_urlencoded};
 
 use crate::auth_code::create_auth_code;
 use crate::db::{self, add_auth_code};
@@ -15,9 +16,11 @@ pub async fn login_form() -> impl Responder {
         .body(LOGIN_HTML)
 }
 
-pub async fn login_submit(body: Bytes) -> impl Responder {
+pub async fn login_submit(body: Bytes) -> HttpResponse {
     // Parse formdata body into map
     let form_data: HashMap<String, String> = parse_form_data(body);
+    // parse callback url from url
+    let callback: String = form_data["callback"].to_string();
 
     // So in here we verify the username and password
     // Then make a time-limited token
@@ -29,7 +32,7 @@ pub async fn login_submit(body: Bytes) -> impl Responder {
         Some(hash) => match bcrypt::verify(&form_data["pass"], &hash) {
             Ok(valid) => {
                 if valid {
-                    return handle_successful_auth(form_data["user"].clone());
+                    return handle_successful_auth(callback, form_data["user"].clone());
                 } else {
                     resp = "oh noes".to_string();
                 }
@@ -47,13 +50,30 @@ pub async fn login_submit(body: Bytes) -> impl Responder {
         .body(resp)
 }
 
-fn handle_successful_auth(user: String) ->  HttpResponse {
-    let authCode = create_auth_code();
-    add_auth_code(authCode.key.clone(), authCode.secret_bytes, user);
-    // TODO this should actually redirect to the callback url with the code in it
-    HttpResponse::Ok()
-        .content_type("text/plain")
-        .body(format!("Auth Code: {}:{}", authCode.key , authCode.secret))
+fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
+    let auth_code = create_auth_code();
+    add_auth_code(auth_code.key.clone(), auth_code.secret_bytes, user);
+
+    println!("Callback {}", callback);
+    // TODO parse URL first before even trying to login
+    let url_result = Url::parse(&callback);
+    match url_result {
+        Ok(mut url) => {
+            url.query_pairs_mut().append_pair(
+                "code",
+                format!("{}:{}", auth_code.key, auth_code.secret).as_str(),
+            );
+            return HttpResponse::Found()
+                .append_header((header::LOCATION, url.to_string()))
+                .finish();
+        }
+        Err(err) => {
+            println!("Failed to parse callback url");
+            return HttpResponse::InternalServerError() // TODO reconsider error code
+                .content_type("text/plain")
+                .body(format!("bad callback: {}", err.to_string()));
+        }
+    }
 }
 
 fn parse_form_data(body: Bytes) -> HashMap<String, String> {
@@ -62,4 +82,12 @@ fn parse_form_data(body: Bytes) -> HashMap<String, String> {
         form_data.insert(key.into_owned(), value.into_owned());
     }
     form_data
+}
+
+fn get_query_param(uri: &Uri, key: &str) -> Option<String> {
+    uri.query().and_then(|query| {
+        form_urlencoded::parse(query.as_bytes())
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.into_owned())
+    })
 }

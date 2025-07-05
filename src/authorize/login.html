@@ -9,18 +9,18 @@
             margin: auto;
             font-family: sans-serif;
         }
-    
+
         form label {
             margin: 5px;
             display: flex;
-    
+
         }
-    
+
         form input {
             flex-grow: 1;
             margin-left: 10px;
         }
-    
+
         form button {
             background: #0044ff;
             border: none;
@@ -39,9 +39,14 @@
         <fieldset>
             <label>Username <input name="user" type="text" /></label>
             <label>Password <input name="pass" type="password" /></label>
+            <input type="hidden" name="callback" value="">
             <button>Submit</button>
         </fieldset>
     </form>
+    <script>
+        // Set the hidden field to the query parameter "callback"
+        document.querySelector("input[name=callback]").value = new URLSearchParams(window.location.search).get("callback");
+    </script>
 </body>
 
 </html>
