@@ -19,6 +19,22 @@
     <p>
         <a href="/oauth/authorize?callback=http%3A%2F%2Flocalhost%3A8080%2F">Login</a>
     </p>
+    <p>
+    <pre id="token"></pre>
+    </p>
+    <script>
+        const authCode = new URLSearchParams(window.location.search).get("code");
+        if (authCode) {
+            const elem = document.getElementById("token");
+            fetch('http://localhost:8080/oauth/token?code=' + authCode)
+                .then(response => {
+                    response.json().then(j => elem.innerText = JSON.stringify(j, null, 2));
+                })
+                .catch(error => {
+                    elem.innerText = "error"
+                });
+        }
+    </script>
 </body>
 
 </html>

@@ -1,4 +1,3 @@
-use actix_web::http::Uri;
 use actix_web::http::header::{self, ContentType};
 use actix_web::{HttpResponse, Responder};
 use bytes::Bytes;
@@ -34,15 +33,19 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
                 if valid {
                     return handle_successful_auth(callback, form_data["user"].clone());
                 } else {
+                    println!("Wrong password");
                     resp = "oh noes".to_string();
                 }
             }
             Err(_) => {
+                println!("Unable to verify password hash");
                 resp = LOGIN_HTML.to_string();
-                println!("Unable to verify password hash")
             }
         },
-        None => resp = "ERR".to_string(),
+        None => {
+            println!("User {} not found", form_data["user"]);
+            resp = "ERR".to_string()
+        },
     };
 
     HttpResponse::Ok()

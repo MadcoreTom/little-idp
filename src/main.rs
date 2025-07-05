@@ -1,5 +1,6 @@
 use actix_web::{App, HttpServer, web};
 mod auth_code;
+mod auth_token;
 mod authorize;
 mod db;
 mod spa;
@@ -13,7 +14,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/oauth")
                     .route("/authorize", web::get().to(authorize::login_form))
-                    .route("/authorize", web::post().to(authorize::login_submit)),
+                    .route("/authorize", web::post().to(authorize::login_submit))
+                    .route("/token", web::get().to(auth_token::get_token)),
             )
             .service(
                 web::scope("/")
