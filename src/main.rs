@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpServer};
 mod authorize;
 mod db;
+mod auth_code;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
