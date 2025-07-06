@@ -4,7 +4,7 @@ use bytes::Bytes;
 use std::collections::HashMap;
 use url::{Url, form_urlencoded};
 
-use crate::auth_code::create_auth_code;
+use crate::auth_code::{create_auth_code, format_auth_code};
 use crate::db::{self, add_auth_code};
 
 static LOGIN_HTML: &str = include_str!("login.html");
@@ -55,7 +55,7 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
 
 fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
     let auth_code = create_auth_code();
-    add_auth_code(auth_code.key.clone(), auth_code.secret_hash, user);
+    add_auth_code(auth_code.key.clone(), auth_code.secret_hash.clone(), user);
 
     println!("Callback {}", callback);
     // TODO parse URL first before even trying to login
@@ -64,7 +64,7 @@ fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
         Ok(mut url) => {
             url.query_pairs_mut().append_pair(
                 "code",
-                format!("{}:{}", auth_code.key, auth_code.secret).as_str(),
+                format_auth_code(&auth_code).as_str(),
             );
             return HttpResponse::Found()
                 .append_header((header::LOCATION, url.to_string()))

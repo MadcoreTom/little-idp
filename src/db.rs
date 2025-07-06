@@ -6,8 +6,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::Mutex;
 
-use crate::auth_code::hex_to_bytes;
-
+use crate::auth_code::{parse_auth_code, verify_auth_code};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct UserData {
@@ -57,9 +56,9 @@ pub fn get_user_pass(user: String) -> Option<String> {
     return ud.get(&user).map(|data| data.hash.to_string());
 }
 
-pub fn get_user(user: String) -> Option<UserData> {
+pub fn get_user(user: &str) -> Option<UserData> {
     let ud: std::sync::MutexGuard<'_, HashMap<String, UserData>> = USER_DATA.lock().unwrap();
-    return ud.get(&user).cloned();
+    return ud.get(user).cloned();
 }
 
 struct DbAuthCode {
@@ -82,34 +81,12 @@ pub fn add_auth_code(key: String, secret_hash: String, user: String) {
     }
 }
 
-pub fn get_user_by_auth_code(code: String) -> Option<UserData> {
-    let parts: Vec<&str> = code.splitn(2, ':').collect();
-    let key = parts[0];
-    let secret = parts[1];
+pub fn get_user_by_auth_code(code: &str) -> Option<UserData> {
+    let auth_code = parse_auth_code(code);
 
     let ac = AUTH_CODE.lock().unwrap();
-
-    // ac.get(key)
-    //     .and_then(|user| get_user(user.user.to_string()))
-    //     .and_then(|user_data| {
-    //         bcrypt::verify(secret, user_data.hash.as_str())
-    //             .map(|valid| if valid { Some(user_data.clone()) } else { None })
-    //             .unwrap_or_else(|_|None )
-    //     })
-
-    ac.get(key)
-        .and_then(|user| {
-            bcrypt::verify(hex_to_bytes(secret), user.secret_hash.as_str())
-                .map(|valid| {
-                    if valid {
-                        println!("valid");
-                        Some(user.user.to_string())
-                    } else {
-                        println!("Invalid for user {} {} {}" , user.user, secret, user.secret_hash);
-                        None
-                    }
-                })
-                .unwrap_or_else(|_| None)
-        })
-        .and_then(|user| get_user(user))
+    ac.get(&auth_code.key)
+        .filter(|user| verify_auth_code(auth_code, &user.key, &user.secret_hash))
+        .map(|user| get_user(&user.user))
+        .unwrap_or_else(|| None)
 }

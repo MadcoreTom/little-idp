@@ -12,7 +12,7 @@ pub async fn get_token(req: HttpRequest) -> impl Responder {
 
     let code = get_query_param(req.uri(), "code").unwrap_or_else(|| "".to_string());
 
-    let json = get_user_by_auth_code(code).map(|data| {
+    let json = get_user_by_auth_code(code.as_str()).map(|data| {
         json!({
           "sub": data.sub,
           "iss": ISS,
