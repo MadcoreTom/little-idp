@@ -15,6 +15,7 @@ The idea of this project is to learn a bit about `rust`, and to build a basic id
 * `GET  /oauth/authorize?callback=AAA` load the login form
 * `POST /oauth/authorize` with formdata content, submit the username, password and callback url. Redirects to the callback URL with the auth code as a `code` query parameter
 * `GET  /oauth/token?code=BBB` exchange an auth code for the token
+* `GET /.well-known/openid-configuration` returns a minimal payload (following the [spec](https://openid.net/specs/openid-connect-discovery-1_0.html#WellKnownRegistry)) describing configuration information like endpoints
 
 # Commands
 

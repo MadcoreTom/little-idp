@@ -4,6 +4,7 @@ mod auth_token;
 mod authorize;
 mod db;
 mod spa;
+mod well_known;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,6 +18,10 @@ async fn main() -> std::io::Result<()> {
                     .route("/authorize", web::post().to(authorize::login_submit))
                     .route("/token", web::get().to(auth_token::get_token)),
             )
+            .service(web::scope("/.well-known").route(
+                "openid-configuration",
+                web::get().to(well_known::get_oidc_configuration),
+            ))
             .service(
                 web::scope("/")
                     .route("index.html", web::get().to(spa::spa_response))
