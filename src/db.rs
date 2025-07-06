@@ -6,6 +6,9 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::Mutex;
 
+use crate::auth_code::hex_to_bytes;
+
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct UserData {
     pub name: String,
@@ -49,22 +52,6 @@ pub fn init_db() {
     }
 }
 
-// pub fn add_user(user: String, pass: String) {
-//     // makes accessing this global state threadsafe (i like it)
-//     // it unlocks it once it falls out of scope, so it helps to wrap with a smaller scope
-//     {
-//         let mut up = USER_PASS.lock().unwrap();
-//         match bcrypt::hash(&pass, 12) {
-//             Ok(h) => {
-//                 up.insert(user, h);
-//             }
-//             Err(_) => {
-//                 println!("could not hash password");
-//             }
-//         }
-//     }
-// }
-
 pub fn get_user_pass(user: String) -> Option<String> {
     let ud = USER_DATA.lock().unwrap();
     return ud.get(&user).map(|data| data.hash.to_string());
@@ -95,19 +82,34 @@ pub fn add_auth_code(key: String, secret_hash: String, user: String) {
     }
 }
 
-pub fn find_auth_code(code: String) -> Option<String> {
+pub fn get_user_by_auth_code(code: String) -> Option<UserData> {
     let parts: Vec<&str> = code.splitn(2, ':').collect();
     let key = parts[0];
-    // let secret = parts[1];
-    {
-        let ac = AUTH_CODE.lock().unwrap();
-        let result = ac.get(key);
-        match result {
-            Some(row) => {
-                // TODO bcrypt match the secret part
-                return Some(row.user.to_string());
-            }
-            None => return None,
-        }
-    }
+    let secret = parts[1];
+
+    let ac = AUTH_CODE.lock().unwrap();
+
+    // ac.get(key)
+    //     .and_then(|user| get_user(user.user.to_string()))
+    //     .and_then(|user_data| {
+    //         bcrypt::verify(secret, user_data.hash.as_str())
+    //             .map(|valid| if valid { Some(user_data.clone()) } else { None })
+    //             .unwrap_or_else(|_|None )
+    //     })
+
+    ac.get(key)
+        .and_then(|user| {
+            bcrypt::verify(hex_to_bytes(secret), user.secret_hash.as_str())
+                .map(|valid| {
+                    if valid {
+                        println!("valid");
+                        Some(user.user.to_string())
+                    } else {
+                        println!("Invalid for user {} {} {}" , user.user, secret, user.secret_hash);
+                        None
+                    }
+                })
+                .unwrap_or_else(|_| None)
+        })
+        .and_then(|user| get_user(user))
 }

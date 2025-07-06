@@ -4,7 +4,7 @@ use actix_web::{HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 use url::form_urlencoded;
 
-use crate::db::{find_auth_code, get_user};
+use crate::db::{get_user_by_auth_code};
 use crate::well_known::ISS;
 
 pub async fn get_token(req: HttpRequest) -> impl Responder {
@@ -12,19 +12,13 @@ pub async fn get_token(req: HttpRequest) -> impl Responder {
 
     let code = get_query_param(req.uri(), "code").unwrap_or_else(|| "".to_string());
 
-    let json = match find_auth_code(code) {
-        Some(user) => get_user(user).map(|data| {
-            json!({
-                "sub": data.sub,
-                "iss": ISS,
-                "name": data.name
-            })
-        }),
-        None => {
-            println!("User not found");
-            None
-        }
-    };
+    let json = get_user_by_auth_code(code).map(|data| {
+        json!({
+          "sub": data.sub,
+          "iss": ISS,
+          "name": data.name
+        })
+    });
 
     HttpResponse::Ok().content_type(ContentType::json()).body(
         json.map(|j| j.to_string())
