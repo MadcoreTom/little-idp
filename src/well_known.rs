@@ -1,14 +1,16 @@
 use actix_web::{HttpResponse, http::header::ContentType};
 use serde_json::json;
 
+const BASE_URL: &str = "http://localhost:8080";
+pub const ISS: &str = BASE_URL;
+
 // See https://openid.net/specs/openid-connect-discovery-1_0.html#WellKnownRegistry
 // This doesn't include all the mandatory details yet
 pub async fn get_oidc_configuration() -> HttpResponse {
-    let base_url = "http://localhost:8080";
     let json = json!({
-        "issuer": base_url,
-        "authorization_endpoint": format!("{}/oauth/authorize", base_url),
-        "token_endpoint": format!("{}/oauth/token", base_url),
+        "issuer": ISS,
+        "authorization_endpoint": format!("{}/oauth/authorize", BASE_URL),
+        "token_endpoint": format!("{}/oauth/token", BASE_URL),
         "claims_supported": [
             "sub", "iss", "name"
         ]

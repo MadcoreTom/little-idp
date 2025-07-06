@@ -1,0 +1,17 @@
+[
+    {
+        "name": "tom",
+        "hash": "$2a$12$KLkNPxhfLOPKCPOo7/uAZeiF.Q2rYFbnprBSse0.k1NK6X4iAM/1K",
+        "sub": "6af3be2f-9a3f-43dd-8205-e186d632f107"
+    },
+    {
+        "name": "mike",
+        "hash": "$2a$12$/0BiUNULvT4SrEeNLGNb8eEB903t37l/jRyLPSRAfyCAp7CpcIgHS",
+        "sub": "2739c3ad-27a4-4f77-87dd-bf328804985a"
+    },
+    {
+        "name": "admin",
+        "hash": "$2a$12$YNUj8B3OfJkg9Nipr..8keF5SUFx7tQVkTgH3DJHsSWHYqs46C7GC",
+        "sub": "300c6bc9-4e03-473c-9300-b38a07abd7c8"
+    }
+]

@@ -8,7 +8,8 @@ mod well_known;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    db::add_user("tom".to_string(), "test".to_string());
+    db::init_db();
+    // db::add_user("tom".to_string(), "test".to_string());
 
     HttpServer::new(|| {
         App::new()
