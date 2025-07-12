@@ -86,12 +86,16 @@
             <label>Username <input name="user" type="text" autofocus/></label>
             <label>Password <input name="pass" type="password" /></label>
             <input type="hidden" name="callback" value="">
+            <input type="hidden" name="state" value="">
+            <input type="hidden" name="nonce" value="">
             <button>Submit</button>
         </fieldset>
     </form>
     <script>
         // Set the hidden field to the query parameter "callback"
-        document.querySelector("input[name=callback]").value = new URLSearchParams(window.location.search).get("callback");
+        document.querySelector("input[name=callback]").value = new URLSearchParams(window.location.search).get("redirect_uri");
+        document.querySelector("input[name=state]").value = new URLSearchParams(window.location.search).get("state");
+        document.querySelector("input[name=nonce]").value = new URLSearchParams(window.location.search).get("nonce");
     </script>
 </body>
 

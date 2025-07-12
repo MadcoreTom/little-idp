@@ -17,7 +17,7 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/oauth")
                     .route("/authorize", web::get().to(authorize::login_form))
                     .route("/authorize", web::post().to(authorize::login_submit))
-                    .route("/token", web::get().to(auth_token::get_token)),
+                    .route("/token", web::post().to(auth_token::get_token)),
             )
             .service(web::scope("/.well-known").route(
                 "openid-configuration",
@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
                     .default_service(web::to(spa::spa_response)),
             )
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8000))?
     .run()
     .await
 }

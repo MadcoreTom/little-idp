@@ -18,7 +18,7 @@
     </p>
     <p>
         <ul>
-            <li><a href="/oauth/authorize?callback=http%3A%2F%2Flocalhost%3A8080%2F">Login</a></li>
+            <li><a href="/oauth/authorize?redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F">Login</a></li>
             <li><a href="/.well-known/openid-configuration">Get OIDC configuration</a></li>
         </ul>
         
@@ -30,7 +30,7 @@
         const authCode = new URLSearchParams(window.location.search).get("code");
         if (authCode) {
             const elem = document.getElementById("token");
-            fetch('http://localhost:8080/oauth/token?code=' + authCode)
+            fetch('http://localhost:8000/oauth/token?code=' + authCode)
                 .then(response => {
                     response.json().then(j => elem.innerText = JSON.stringify(j, null, 2));
                 })

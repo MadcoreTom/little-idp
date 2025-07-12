@@ -12,7 +12,7 @@ use crate::auth_code::{parse_auth_code, verify_auth_code};
 pub struct UserData {
     pub name: String,
     hash: String,
-    pub sub: String,
+    pub sub: String
 }
 
 // let mut auth_codes: HashMap<String, String> = HashMap::new();
@@ -61,17 +61,20 @@ pub fn get_user(user: &str) -> Option<UserData> {
     return ud.get(user).cloned();
 }
 
-struct DbAuthCode {
+#[derive(Clone)]
+pub struct DbAuthCode {
     key: String,
     secret_hash: String,
-    user: String, // TODO add expiry
+    user: String, 
+   pub nonce: String
 }
 
-pub fn add_auth_code(key: String, secret_hash: String, user: String) {
+pub fn add_auth_code(key: String, secret_hash: String, user: String, nonce: String) {
     let val = DbAuthCode {
         key: key.clone(),
         secret_hash,
         user,
+        nonce
     };
 
     // Save
@@ -81,12 +84,19 @@ pub fn add_auth_code(key: String, secret_hash: String, user: String) {
     }
 }
 
-pub fn get_user_by_auth_code(code: &str) -> Option<UserData> {
+#[derive(Clone)]
+pub struct UserDataAndCode {
+    pub user: Option<UserData>,
+    pub code: DbAuthCode
+}
+
+
+pub fn get_user_by_auth_code(code: &str) -> Option<UserDataAndCode> {
     let auth_code = parse_auth_code(code);
 
     let ac = AUTH_CODE.lock().unwrap();
     ac.get(&auth_code.key)
         .filter(|user| verify_auth_code(auth_code, &user.key, &user.secret_hash))
-        .map(|user| get_user(&user.user))
+        .map(|user| Some(UserDataAndCode {user: get_user(&user.user).clone(), code: user.clone()}))
         .unwrap_or_else(|| None)
 }

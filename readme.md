@@ -40,3 +40,11 @@ _little-idp_ is the name of the project in `Cargo.toml`
 ```
 cargo run
 ```
+
+#  Docker Compose
+I've been using docker compose to deploy both `little-idp` and **keycloak** in a docker network. You still have to manually set up the OIDC idp (just use the well-known endpoint, but replace the hostname with "little-idp")
+
+I've been using the following command to just rebuild the rust code
+```
+docker compose up --force-recreate little-idp
+```

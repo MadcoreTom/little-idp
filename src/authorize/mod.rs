@@ -20,6 +20,7 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
     let form_data: HashMap<String, String> = parse_form_data(body);
     // parse callback url from url
     let callback: String = form_data["callback"].to_string();
+    let state: String = form_data["state"].to_string();
 
     // So in here we verify the username and password
     // Then make a time-limited token
@@ -31,7 +32,7 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
         Some(hash) => match bcrypt::verify(&form_data["pass"], &hash) {
             Ok(valid) => {
                 if valid {
-                    return handle_successful_auth(callback, form_data["user"].clone());
+                    return handle_successful_auth(callback, state, form_data["user"].clone(), form_data["nonce"].clone()); // TODO nonce could be optional
                 } else {
                     println!("Wrong password");
                     resp = "oh noes".to_string();
@@ -53,9 +54,9 @@ pub async fn login_submit(body: Bytes) -> HttpResponse {
         .body(resp)
 }
 
-fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
+fn handle_successful_auth(callback: String, state:String, user: String, nonce: String) -> HttpResponse {
     let auth_code = create_auth_code();
-    add_auth_code(auth_code.key.clone(), auth_code.secret_hash.clone(), user);
+    add_auth_code(auth_code.key.clone(), auth_code.secret_hash.clone(), user, nonce);
 
     println!("Callback {}", callback);
     // TODO parse URL first before even trying to login
@@ -65,7 +66,7 @@ fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
             url.query_pairs_mut().append_pair(
                 "code",
                 format_auth_code(&auth_code).as_str(),
-            );
+            ).append_pair("state", state.as_str());
             return HttpResponse::Found()
                 .append_header((header::LOCATION, url.to_string()))
                 .finish();
@@ -74,7 +75,7 @@ fn handle_successful_auth(callback: String, user: String) -> HttpResponse {
             println!("Failed to parse callback url");
             return HttpResponse::InternalServerError() // TODO reconsider error code
                 .content_type("text/plain")
-                .body(format!("bad callback: {}", err.to_string()));
+                .body(format!("bad callback: {} . err: {}", callback, err.to_string()));
         }
     }
 }

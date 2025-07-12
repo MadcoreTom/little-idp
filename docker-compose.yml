@@ -1,0 +1,19 @@
+version: '3.8' # Or a higher version like '3.9' if preferred
+
+services:
+  little-idp:
+    image: rust:slim-trixie
+    volumes:
+      - ./:/code
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "cp -r /code /code_copy && cd /code_copy && cargo run"
+  keycloak:
+    image: keycloak/keycloak:26.3.0
+    ports:
+      - "8080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command: "start-dev"
